@@ -1,0 +1,79 @@
+# Node modules (frontend/backend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+dist/
+build/
+public/build/
+.next/
+out/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.sw?
+*.sublime-project
+*.sublime-workspace
+
+# Compiled source
+*.out
+*.class
+*.o
+*.so
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+coverage/
+.cache/
+*.pid
+*.seed
+*.tgz
+
+# Dependency directories
+bower_components/
+jspm_packages/
+
+# Database dumps
+*.sql
+*.sqlite
+*.dump
+
+# Secrets
+secrets.*
+*.key
+*.pem
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Testing
+coverage/
+test-results/
+junit-report.xml
+
+# Lint and formatting
+.eslintcache
+.prettiercache
+stylelint.log
+
+dist.*
