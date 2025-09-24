@@ -1,0 +1,48 @@
+create table users (
+  id uuid primary key default gen_random_uuid(),
+  clerk_id text unique not null,
+  email text unique not null,
+  subscription text not null default 'free',
+  search_count_today int default 0,
+  last_search_date date,
+  created_at timestamp default now()
+);
+
+create table searches (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,
+  email text not null,
+  breached boolean not null,
+  breach_count int default 0,
+  searched_at timestamp default now()
+);
+
+create table monitored_emails (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,
+  email text not null,
+  last_breach_count int default 0,
+  last_checked_at timestamp default now(),
+  created_at timestamp default now(),
+  unique(user_id, email)
+);
+
+create table subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,
+  razorpay_customer_id text not null,
+  razorpay_subscription_id text not null,
+  status text not null default 'active', -- active, cancelled, etc.
+  plan text not null default 'pro',
+  current_period_end timestamp,
+  created_at timestamp default now()
+);
+
+
+create table analytics_cache (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,
+  total_searches int default 0,
+  total_breached int default 0,
+  updated_at timestamp default now()
+);
