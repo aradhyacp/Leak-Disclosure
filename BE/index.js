@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import searchRouter from "./search/search.js"
 // import authRouter from "./auth/auth.js"
-import "./monitor/monitorCron.js"
+// import "./monitor/monitorCron.js"
 
 const app = express();
 
