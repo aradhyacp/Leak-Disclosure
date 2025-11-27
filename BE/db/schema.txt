@@ -3,10 +3,15 @@ create table users (
   clerk_id text unique not null,
   email text unique not null,
   subscription text not null default 'free',
-  search_count_today int default 0,
-  last_search_date date,
   created_at timestamp default now()
 );
+
+CREATE TABLE user_search (
+  id uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  search_count_today int DEFAULT 0,
+  last_search_date date
+);
+
 
 create table searches (
   id uuid primary key default gen_random_uuid(),
