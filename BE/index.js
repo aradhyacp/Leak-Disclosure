@@ -1,7 +1,7 @@
 import config from "./config.js";
 import express from "express";
 import cors from "cors";
-import searchRouter from "./router/search.js"
+import searchRouter from "./search/search.js"
 // import authRouter from "./auth/auth.js"
 
 const app = express();
