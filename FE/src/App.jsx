@@ -1,10 +1,12 @@
 import './App.css'
 import AppRoutes from './Routes/AppRoutes'
+import { ThemeProvider } from './context/ThemeContext'
 
 function App() {
-
   return (
-    <AppRoutes/>
+    <ThemeProvider>
+      <AppRoutes/>
+    </ThemeProvider>
   )
 }
 
