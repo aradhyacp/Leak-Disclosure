@@ -18,7 +18,7 @@ const PORT = config.PORT || 1337;
 
 app.use('/api/webhook', clerkWebook)
 app.use("/api",searchRouter);
-app.use("api/auth",authRouter);
+app.use("/api/auth",authRouter);
 
 app.get("/",(req,res)=>{
     res.json({
