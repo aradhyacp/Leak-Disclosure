@@ -7,9 +7,11 @@ import authRouter from "./auth/auth.js"
 import clerkWebook from "./webhook/webhook.js"
 import { clerkMiddleware } from "@clerk/express";
 import stripeGateway from "./subscription/subscription.js"
+import stripeWebhook from "./webhook/stripeWebhook.js"
 
 const app = express();
 
+app.use("/api/webhook/stripe",express.raw({ type: "application/json" }),stripeWebhook)
 
 app.use(cors());
 app.use(express.json());
