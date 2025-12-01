@@ -17,10 +17,12 @@ router.post("/stripe-checkout",async (req,res)=>{
             cancel_url:"http://localhost:5173/stripe/cancel",
             customer_email: custEmail
         })
-        res.json({url: session.url})
+        console.log(session);
+        
+        return res.json({url: session.url})
     } catch (error) {
         console.log(error);
-        res.json({message: "an error from stripe end"})
+        return res.json({message: "an error from stripe end"})
     }
 })
 
