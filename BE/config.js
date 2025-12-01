@@ -5,5 +5,6 @@ export default {
     PORT: process.env.PORT,
     SUPABASE_URL : process.env.SUPABASE_URL,
     SUPABASE_KEY : process.env.SUPABASE_KEY,
-    WEBHOOK_SECRET : process.env.WEBHOOK_SECRET
+    WEBHOOK_SECRET : process.env.WEBHOOK_SECRET,
+    STRIPE_SECRET_KEY : process.env.STRIPE_SECRET_KEY
 }
