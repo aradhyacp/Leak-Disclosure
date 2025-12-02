@@ -14,7 +14,7 @@ const Success = () => {
       customClass: {
         popup: 'rounded-2xl p-6 shadow-xl',
         title: 'text-2xl font-bold',
-        confirmButton: 'bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold',
+        confirmButton: 'bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold border-none outline-none focus:outline-none',
       },
       buttonsStyling: false,
     }).then((result) => {
