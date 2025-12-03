@@ -35,7 +35,7 @@ create table monitored_emails (
 create table subscriptions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references users(id) on delete cascade,
-  stripe_order_id text not null, -- cs_test_a1x5wDiymqdJAIAYY0uvrqRNOSjIt5OjOVD3f2iXDr5pRCbAK5gn87sEWv
+  stripe_order_id text not null, -- cs_test_a1x5wDiymqdJAIAYY0uvrqRNOSjIt5OjOVD3f2iXDr5pRCbAK5gn87sEWv filled in the session crezted 
   stripe_invoice_id text, -- in_1SZdcXGVzqmVv3a2DwHxAys5
   payment_status text not null default 'pending', -- pending, completed, failed
   subscription_status text not null default 'pending', -- active, cancelled, etc.
