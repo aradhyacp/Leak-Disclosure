@@ -37,7 +37,8 @@ router.post("/search", authMiddleware,async (req, res) => {
       message: "there is something wrong in verifying you",
     });
   }
-
+  const user_subscription = req.subscription;
+  if(user_subscription === "pro"){
   const breaches = await fetch(
     `https://api.xposedornot.com/v1/check-email/${validEmail}`
   );
@@ -89,12 +90,34 @@ if (analyticsRow) {
   });
 }
 
+const {data:last_search_table} = await supabase.from("user_search").select("*").eq("id",userId).single()
+
+if(!last_search_table){
+    await supabase.from("user_search").insert({
+        id: userId,
+        search_count_today: 1,
+        last_search_date: new Date().toISOString()
+    })
+}else{
+    await supabase.from("user_search").update({
+        search_count_today: last_search_table.search_count_today + 1,
+        last_search_date: new Date().toISOString()
+    }).eq("id",userId)
+}
+
   return res.json({
     email: apiData.email,
     breaches: apiData.breaches || [],
     message: apiData.breaches?.length ? "Breaches found" : "No breaches found",
     count: count,
   });
+} else if(user_subscription === "free"){
+    //i will try this later
+} else{
+    return res.json({
+        message:"you are neither a free user nor a pro user we are having difficulty in identifying you"
+    })
+}
 });
 
 router.post("/detailed-search", authMiddleware ,async (req, res) => {
