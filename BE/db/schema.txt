@@ -3,13 +3,13 @@ create table users (
   clerk_id text unique not null,
   email text unique not null,
   subscription text not null default 'free',
-  created_at timestamp default now()
+  created_at timestamptz default now()
 );
 
 CREATE TABLE user_search (
   id uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   search_count_today int DEFAULT 0,
-  last_search_date date
+  last_search_date timestamptz
 );
 
 
@@ -19,7 +19,7 @@ create table searches (
   email text not null,
   breached boolean not null,
   breach_count int default 0,
-  searched_at timestamp default now()
+  searched_at timestamptz default now()
 );
 
 create table monitored_emails (
@@ -27,8 +27,8 @@ create table monitored_emails (
   user_id uuid references users(id) on delete cascade,
   email text not null,
   last_breach_count int default 0,
-  last_checked_at timestamp default now(),
-  created_at timestamp default now(),
+  last_checked_at timestamptz default now(),
+  created_at timestamptz default now(),
   unique(user_id, email)
 );
 
@@ -42,8 +42,8 @@ create table subscriptions (
   stripe_status_text text not null,
   stripe_payment_status boolean not null, -- true for payment successful, false for all cases
   plan text not null default 'pro',
-  plan_validity timestamp,
-  created_at timestamp default now()
+  plan_validity timestamptz,
+  created_at timestamptz default now()
 );
 
 
@@ -52,5 +52,5 @@ create table analytics_cache (
   user_id uuid references users(id) on delete cascade,
   total_searches int default 0,
   total_breached int default 0,
-  updated_at timestamp default now()
+  updated_at timestamptz default now()
 );
