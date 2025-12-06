@@ -8,11 +8,59 @@ const emailSchema = z.email({
   error: "Invalid email format send correct email",
 });
 
-router.post("/search", authMiddleware,async (req, res) => {
+const breachSearch = async (validEmail, userId) => {
   var breachedBoolean = true;
+  const breaches = await fetch(
+    `https://api.xposedornot.com/v1/check-email/${validEmail}`
+  );
+  const apiData = await breaches.json();
+  if (apiData.length === 0 || apiData.Error) {
+    breachedBoolean = false;
+    return { breached: breachedBoolean, apiData: null, count: 0 };
+  }
+  const count = apiData.breaches[0].length || 0;
+
+  const { data: search_insert, error: search_insert_error } = await supabase
+    .from("searches")
+    .insert({
+      user_id: userId,
+      email: validEmail,
+      breached: breachedBoolean,
+      breach_count: count,
+    });
+
+  if (search_insert_error) {
+    return { error: "Failed to insert to searches table" };
+  }
+
+  const { data: analyticsRow } = await supabase
+    .from("analytics_cache")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+
+  if (analyticsRow) {
+    await supabase
+      .from("analytics_cache")
+      .update({
+        total_searches: analyticsRow.total_searches + 1,
+        total_breached: analyticsRow.total_breached + count,
+      })
+      .eq("user_id", userId);
+  } else {
+    await supabase.from("analytics_cache").insert({
+      user_id: userId,
+      total_searches: 1,
+      total_breached: count,
+    });
+  }
+  return { breached: breachedBoolean, apiData, count };
+};
+
+router.post("/search", authMiddleware, async (req, res) => {
   const { email } = req.body;
   console.log(req.clerkId);
-  
+
   const validatedData = emailSchema.safeParse(email);
   if (!validatedData.success) {
     return res.json({
@@ -27,10 +75,9 @@ router.post("/search", authMiddleware,async (req, res) => {
     .eq("clerk_id", req.clerkId)
     .single();
 
-    console.log(user_id);
-    
-    const userId = user_id?.id;
+  console.log(user_id);
 
+  const userId = user_id?.id;
 
   if (!user_id || user_id_error) {
     return res.json({
@@ -38,90 +85,99 @@ router.post("/search", authMiddleware,async (req, res) => {
     });
   }
   const user_subscription = req.subscription;
-  if(user_subscription === "pro"){
-  const breaches = await fetch(
-    `https://api.xposedornot.com/v1/check-email/${validEmail}`
-  );
-  const apiData = await breaches.json();
-  if (apiData.length === 0) {
-    breachedBoolean = false;
-    return res.json({
-      message: "No breaches found for this email",
-    });
-  }
-  if (apiData.Error) {
-    breachedBoolean = false;
-    return res.json({
-      message: "No breaches found for this email",
-    });
-  }
-  const count = apiData.breaches[0].length;
+  if (user_subscription === "pro") {
+    const result = await breachSearch(validEmail, userId);
 
-  const { data: search_insert, error: search_insert_error } = await supabase
-    .from("searches")
-    .insert({
-  user_id: userId,
-  email: validEmail,
-  breached: breachedBoolean,
-  breach_count: count,
-})
-  if (search_insert_error) {
-    return res.json({
-      message: "Failed to insert to DB",
-    });
-  }
+    const { data: last_search_table } = await supabase
+      .from("user_search")
+      .select("*")
+      .eq("id", userId)
+      .maybeSingle();
 
-  const { data: analyticsRow } = await supabase
-  .from("analytics_cache")
-  .select("*")
-  .eq("user_id", userId)
-  .single();
-
-if (analyticsRow) {
-  await supabase.from("analytics_cache").update({
-    total_searches: analyticsRow.total_searches + 1,
-    total_breached: analyticsRow.total_breached + count,
-  }).eq("user_id", userId);
-} else {
-  await supabase.from("analytics_cache").insert({
-    user_id: userId,
-    total_searches: 1,
-    total_breached: count,
-  });
-}
-
-const {data:last_search_table} = await supabase.from("user_search").select("*").eq("id",userId).single()
-
-if(!last_search_table){
-    await supabase.from("user_search").insert({
+    //need to write the reset to 0 after a day
+    if (!last_search_table) {
+      await supabase.from("user_search").insert({
         id: userId,
         search_count_today: 1,
-        last_search_date: new Date().toISOString()
-    })
-}else{
-    await supabase.from("user_search").update({
-        search_count_today: last_search_table.search_count_today + 1,
-        last_search_date: new Date().toISOString()
-    }).eq("id",userId)
-}
+        last_search_date: new Date().toISOString(),
+      });
+    } else {
+      await supabase
+        .from("user_search")
+        .update({
+          search_count_today: last_search_table.search_count_today + 1,
+          last_search_date: new Date().toISOString(),
+        })
+        .eq("id", userId);
+    }
 
-  return res.json({
-    email: apiData.email,
-    breaches: apiData.breaches || [],
-    message: apiData.breaches?.length ? "Breaches found" : "No breaches found",
-    count: count,
-  });
-} else if(user_subscription === "free"){
-    return res.json({message:"under construction"})
-} else{
+    if (result.error) {
+      return res.json({ message: result.error });
+    }
+
+    if (!result.apiData) {
+      return res.json({ message: "No breaches found", count: 0 });
+    }
+
     return res.json({
-        message:"you are neither a free user nor a pro user we are having difficulty in identifying you"
-    })
-}
+      email: result.apiData.email,
+      breaches: result.apiData.breaches || [],
+      message: result.count > 0 ? "Breaches found" : "No breaches found",
+      count: result.count,
+    });
+  } else if (user_subscription === "free") {
+    const { data: userSearch, error: userSearchError } = await supabase
+      .from("user_search")
+      .select("*")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!userSearch) {
+      await supabase.from("user_search").insert({
+        id: userId,
+        search_count_today: 1,
+        last_search_date: new Date.toISOString(),
+      });
+    }
+  } else {
+    const { data: user_search_data, error: user_search } = await supabase
+      .from("user_search")
+      .select("*")
+      .eq("id", userId)
+      .single();
+    if (!user_search_data) {
+      await supabase.from("user_search").insert({
+        id: userId,
+        search_count_today: 1,
+        last_search_date: new Date().toISOString(),
+      });
+
+      //need to write more here
+    }
+    // if(user_search_data?.search_count_today>10)
+    const todayDate = new Date().toISOString().split("T")[0];
+    const lastSearch = new Date(user_search_data?.last_search_date)
+      .toISOString()
+      .split("T")[0];
+    if (todayDate > lastSearch) {
+      await supabase.from("user_search").update({
+        search_count_today: 1,
+        last_search_date: new Date().toISOString(),
+      });
+    }
+    {
+      await supabase
+        .from("user_search")
+        .update({
+          search_count_today: last_search_table.search_count_today + 1,
+          last_search_date: new Date().toISOString(),
+        })
+        .eq("id", userId);
+    }
+  }
 });
 
-router.post("/detailed-search", authMiddleware ,async (req, res) => {
-    var breachedBoolean = true;
+router.post("/detailed-search", authMiddleware, async (req, res) => {
+  var breachedBoolean = true;
   const { email } = req.body;
   const validatedData = emailSchema.safeParse(email);
   if (!validatedData.success) {
@@ -138,7 +194,7 @@ router.post("/detailed-search", authMiddleware ,async (req, res) => {
     .eq("clerk_id", req.clerkId)
     .single();
 
-    const userId = user_id?.id;
+  const userId = user_id?.id;
 
   if (!user_id || user_id_error) {
     return res.json({
@@ -152,34 +208,34 @@ router.post("/detailed-search", authMiddleware ,async (req, res) => {
   const detailedData = await detailedBreached.json();
   console.log(detailedData);
   if (detailedData.BreachMetrics === null) {
-     breachedBoolean = false;
+    breachedBoolean = false;
     return res.json({
       message: "No detailed breaches found for this email",
     });
   }
   if (detailedData.ExposedBreaches === null) {
-     breachedBoolean = false;
+    breachedBoolean = false;
     return res.json({
       message: "No detailed breaches found for this email",
     });
   }
   if (detailedData.detail === "Not found") {
-     breachedBoolean = false;
+    breachedBoolean = false;
     return res.json({ message: "No detailed breaches found for this email" });
   }
 
   console.log(detailedData.BreachesSummary);
   const breachedCount = detailedData.BreachesSummary.site.split(";").length;
   console.log(breachedCount);
-  
+
   const { data: search_insert, error: search_insert_error } = await supabase
     .from("searches")
     .insert({
-  user_id: userId,
-  email: validEmail,
-  breached: breachedBoolean,
-  breach_count: breachedCount,
-})
+      user_id: userId,
+      email: validEmail,
+      breached: breachedBoolean,
+      breach_count: breachedCount,
+    });
   if (search_insert_error) {
     return res.json({
       message: "Failed to insert to DB",
@@ -187,23 +243,26 @@ router.post("/detailed-search", authMiddleware ,async (req, res) => {
   }
 
   const { data: analyticsRow } = await supabase
-  .from("analytics_cache")
-  .select("*")
-  .eq("user_id", userId)
-  .single();
+    .from("analytics_cache")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
 
-if (analyticsRow) {
-  await supabase.from("analytics_cache").update({
-    total_searches: analyticsRow.total_searches + 1,
-    total_breached: analyticsRow.total_breached + breachedCount,
-  }).eq("user_id", userId);
-} else {
-  await supabase.from("analytics_cache").insert({
-    user_id: userId,
-    total_searches: 1,
-    total_breached: breachedCount,
-  });
-}
+  if (analyticsRow) {
+    await supabase
+      .from("analytics_cache")
+      .update({
+        total_searches: analyticsRow.total_searches + 1,
+        total_breached: analyticsRow.total_breached + breachedCount,
+      })
+      .eq("user_id", userId);
+  } else {
+    await supabase.from("analytics_cache").insert({
+      user_id: userId,
+      total_searches: 1,
+      total_breached: breachedCount,
+    });
+  }
   return res.json({
     message: "Detailed breaches found",
     industries: detailedData.BreachMetrics.industry,
