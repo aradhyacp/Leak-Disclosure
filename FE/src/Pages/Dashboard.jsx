@@ -5,6 +5,9 @@ import SearchMail from '../Components/SearchMail'
 import Details from '../Components/Details'
 import Monitor from '../Components/Monitor'
 import { useTheme } from '../context/ThemeContext'
+import {loadStripe} from '@stripe/stripe-js';
+
+const stripePromise = loadStripe(import.meta.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 const Dashboard = () => {
   const { user } = useUser()
@@ -65,11 +68,19 @@ const Dashboard = () => {
     fetchUserData()
   }, [isSignedIn, getToken])
 
-  const handleUpgradeToPro = () => {
-    // @csam1 make new page for payments and then from there call stripe order backend
-    setUserPlan('pro')
-    localStorage.setItem('userPlan', 'pro')
-    alert('Pro plan activated! (This is a demo - integrate with payment system in production)')
+  const handleUpgradeToPro = async() => {
+    const stripe = await stripePromise;
+
+    const res = await fetch("http://localhost:4242/create-checkout-session", {
+      method: "POST",
+    });
+
+    const { id } = await res.json();
+
+    await stripe.redirectToCheckout({ sessionId: id });
+    // setUserPlan('pro')
+    // localStorage.setItem('userPlan', 'pro')
+    // alert('Pro plan activated! (This is a demo - integrate with payment system in production)')
   }
 
   const refreshSearchCount = async () => {
