@@ -78,11 +78,11 @@ router.post("/create", async (req, res) => {
         return res.status(500).json({ error: "Failed to add to supabase" });
       }
 
-      // await clerkClient.users.updateUserMetadata(id, {
-      //   publicMetadata: { role: "user" },
-      // });
+      await clerkClient.users.updateUserMetadata(id, {
+        publicMetadata: { role: "user", subscription: "free" },
+      });
 
-      // console.log("user added to supabase and role set");
+      console.log("user added to supabase and role set");
     } catch (error) {
       console.error("Error creating user in database:", error);
       return res.status(500).json({ message: "Error creating user" });
