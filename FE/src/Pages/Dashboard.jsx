@@ -66,8 +66,7 @@ const Dashboard = () => {
   }, [isSignedIn, getToken])
 
   const handleUpgradeToPro = () => {
-    // In a real app, this would integrate with a payment system
-    // For now, we'll just update localStorage
+    // @csam1 make new page for payments and then from there call stripe order backend
     setUserPlan('pro')
     localStorage.setItem('userPlan', 'pro')
     alert('Pro plan activated! (This is a demo - integrate with payment system in production)')
