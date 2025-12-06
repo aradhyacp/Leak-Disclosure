@@ -84,78 +84,34 @@ router.post("/search", authMiddleware, async (req, res) => {
       message: "there is something wrong in verifying you",
     });
   }
-  const user_subscription = req.subscription;
-  if (user_subscription === "pro") {
-    const result = await breachSearch(validEmail, userId);
 
-    const { data: last_search_table } = await supabase
-      .from("user_search")
-      .select("*")
-      .eq("id", userId)
-      .maybeSingle();
-
-    //need to write the reset to 0 after a day
-    if (!last_search_table) {
-      await supabase.from("user_search").insert({
-        id: userId,
-        search_count_today: 1,
-        last_search_date: new Date().toISOString(),
-      });
-    } else {
-      await supabase
-        .from("user_search")
-        .update({
-          search_count_today: last_search_table.search_count_today + 1,
-          last_search_date: new Date().toISOString(),
-        })
-        .eq("id", userId);
-    }
-
-    if (result.error) {
-      return res.json({ message: result.error });
-    }
-
-    if (!result.apiData) {
-      return res.json({ message: "No breaches found", count: 0 });
-    }
-
-    return res.json({
-      email: result.apiData.email,
-      breaches: result.apiData.breaches || [],
-      message: result.count > 0 ? "Breaches found" : "No breaches found",
-      count: result.count,
+  const { data: last_search_table } = await supabase
+    .from("user_search")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
+  if (!last_search_table) {
+    await supabase.from("user_search").insert({
+      id: userId,
+      search_count_today: 1,
+      last_search_date: new Date().toISOString(),
     });
-  } else if (user_subscription === "free") {
-    const { data: userSearch, error: userSearchError } = await supabase
-      .from("user_search")
-      .select("*")
-      .eq("id", userId)
-      .maybeSingle();
-    if (!userSearch) {
-      await supabase.from("user_search").insert({
-        id: userId,
-        search_count_today: 1,
-        last_search_date: new Date.toISOString(),
-      });
-    }
   } else {
-    const { data: user_search_data, error: user_search } = await supabase
+    await supabase
       .from("user_search")
-      .select("*")
-      .eq("id", userId)
-      .single();
-    if (!user_search_data) {
-      await supabase.from("user_search").insert({
-        id: userId,
-        search_count_today: 1,
+      .update({
+        search_count_today: last_search_table.search_count_today + 1,
         last_search_date: new Date().toISOString(),
-      });
+      })
+      .eq("id", userId);
+  }
 
-      //need to write more here
-    }
-    // if(user_search_data?.search_count_today>10)
+  const user_subscription = req.subscription;
+
+  // If Free subscription check timing and update search results
+  if (user_subscription === "free") {
     const todayDate = new Date().toISOString().split("T")[0];
-    const lastSearch = new Date(user_search_data?.last_search_date)
+    const lastSearch = new Date(last_search_table?.last_search_date)
       .toISOString()
       .split("T")[0];
     if (todayDate > lastSearch) {
@@ -163,17 +119,26 @@ router.post("/search", authMiddleware, async (req, res) => {
         search_count_today: 1,
         last_search_date: new Date().toISOString(),
       });
-    }
-    {
-      await supabase
-        .from("user_search")
-        .update({
-          search_count_today: last_search_table.search_count_today + 1,
-          last_search_date: new Date().toISOString(),
-        })
-        .eq("id", userId);
+    } else if (last_search_table.search_count_today > 10) {
+      return res.json({ message: "Limit exceeded for today" });
     }
   }
+
+  const result = await breachSearch(validEmail, userId);
+  if (result.error) {
+    return res.json({ message: result.error });
+  }
+
+  if (!result.apiData) {
+    return res.json({ message: "No breaches found", count: 0 });
+  }
+
+  return res.json({
+    email: result.apiData.email,
+    breaches: result.apiData.breaches || [],
+    message: result.count > 0 ? "Breaches found" : "No breaches found",
+    count: result.count,
+  });
 });
 
 router.post("/detailed-search", authMiddleware, async (req, res) => {
