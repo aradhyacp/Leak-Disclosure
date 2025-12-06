@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useTheme } from '../context/ThemeContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@clerk/clerk-react'
+import { ChartSkeleton } from './LoadingSkeleton';
+import { animated, useSpring } from '@react-spring/web';
 
 const Details = ({ canSearch, userPlan, searchCount, onSearch }) => {
   const { isDark } = useTheme();
@@ -10,6 +12,13 @@ const Details = ({ canSearch, userPlan, searchCount, onSearch }) => {
   const [details, setDetails] = useState(null);
   const [error, setError] = useState("");
   const { getToken } = useAuth();
+
+  // Animation for details appearance
+  const detailsAnimation = useSpring({
+    opacity: details ? 1 : 0,
+    transform: details ? 'translateY(0px)' : 'translateY(20px)',
+    config: { tension: 300, friction: 30 }
+  });
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -23,6 +32,13 @@ const Details = ({ canSearch, userPlan, searchCount, onSearch }) => {
 
     if (!email) {
       setError("Please enter an email address");
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address");
       return;
     }
 
@@ -43,11 +59,11 @@ const Details = ({ canSearch, userPlan, searchCount, onSearch }) => {
         body: JSON.stringify({ email }),
       });
 
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
       const data = await response.json();
-      
-      // Debug: Log the industries data structure
-      console.log('API Response - Industries:', data.industries);
-      console.log('API Response - Full Data:', data);
 
       if (data.message && data.message.includes("No detailed breaches")) {
         setDetails({
@@ -74,7 +90,7 @@ const Details = ({ canSearch, userPlan, searchCount, onSearch }) => {
 
       onSearch();
     } catch (err) {
-      setError("Failed to fetch details. Please try again.");
+      setError("Failed to fetch details. Please check your connection and try again.");
       console.error("Details error:", err);
     } finally {
       setLoading(false);
@@ -221,24 +237,48 @@ const Details = ({ canSearch, userPlan, searchCount, onSearch }) => {
 
       <form onSubmit={handleSearch} className="mb-6">
         <div className="flex gap-4">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter email address"
-            className={`flex-1 px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent transition-colors border ${
-              isDark 
-                ? 'bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder-gray-500' 
-                : 'bg-white border-gray-300 text-gray-900'
-            }`}
-            disabled={loading}
-          />
+          <div className="flex-1 relative">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError("");
+              }}
+              placeholder="Enter email address (e.g., example@email.com)"
+              className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent transition-all border ${
+                isDark 
+                  ? 'bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder-gray-500' 
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+              } ${error ? 'border-red-500' : ''}`}
+              disabled={loading}
+              aria-label="Email address input"
+              aria-invalid={error ? 'true' : 'false'}
+              aria-describedby={error ? 'email-error' : undefined}
+            />
+            {error && (
+              <p id="email-error" className={`mt-2 text-sm ${isDark ? 'text-red-400' : 'text-red-600'}`} role="alert">
+                {error}
+              </p>
+            )}
+          </div>
           <button
             type="submit"
             disabled={loading || !canSearch}
-            className="px-6 py-3 bg-[#10b981] text-white rounded-lg hover:bg-[#059669] disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors font-medium"
+            className="px-6 py-3 bg-[#10b981] text-white rounded-lg hover:bg-[#059669] disabled:bg-gray-600 disabled:cursor-not-allowed transition-all font-medium flex items-center gap-2 min-w-[140px] justify-center"
+            aria-label={loading ? 'Fetching details...' : 'Get breach details'}
           >
-            {loading ? "Fetching..." : "Get Details"}
+            {loading ? (
+              <>
+                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Fetching...</span>
+              </>
+            ) : (
+              "Get Details"
+            )}
           </button>
         </div>
       </form>
@@ -252,14 +292,27 @@ const Details = ({ canSearch, userPlan, searchCount, onSearch }) => {
         </div>
       )}
 
-      {error && (
-        <div className={`mb-4 p-4 rounded-lg border ${isDark ? 'bg-red-900/20 border-red-800/50' : 'bg-red-50 border-red-200'}`}>
-          <p className={isDark ? 'text-red-300' : 'text-red-800'}>{error}</p>
+      {loading && (
+        <div className="space-y-6">
+          <ChartSkeleton />
+          <ChartSkeleton />
         </div>
       )}
 
-      {details && (
-        <div className="space-y-6">
+      {error && !loading && (
+        <div className={`mb-4 p-4 rounded-lg border ${isDark ? 'bg-red-900/20 border-red-800/50' : 'bg-red-50 border-red-200'}`} role="alert">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 mt-0.5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <p className={isDark ? 'text-red-300' : 'text-red-800'}>{error}</p>
+          </div>
+        </div>
+      )}
+
+      {details && !loading && (
+        <animated.div style={detailsAnimation}>
+          <div className="space-y-6">
           {details.found ? (
             <>
               {/* Risk Score and Summary */}
@@ -481,6 +534,19 @@ const Details = ({ canSearch, userPlan, searchCount, onSearch }) => {
               </div>
             </div>
           )}
+          </div>
+        </animated.div>
+      )}
+
+      {!details && !loading && !error && (
+        <div className={`rounded-lg border p-12 text-center ${isDark ? 'bg-[#1a1a1a] border-[#2a2a2a]' : 'bg-gray-50 border-gray-200'}`}>
+          <div className="text-5xl mb-4">🔍</div>
+          <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Ready to Check Breach Details?
+          </h3>
+          <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
+            Enter an email address above to get comprehensive breach information including severity, timeline, and industry distribution.
+          </p>
         </div>
       )}
     </div>

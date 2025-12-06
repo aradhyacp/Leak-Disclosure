@@ -8,13 +8,13 @@ import { useTheme } from '../context/ThemeContext'
 
 const Dashboard = () => {
   const { user } = useUser()
-  const { isSignedIn } = useAuth()
+  const { isSignedIn, getToken } = useAuth()
   const navigate = useNavigate()
   const { isDark, toggleTheme } = useTheme()
   const [activeTab, setActiveTab] = useState('search')
   const [userPlan, setUserPlan] = useState('free') // 'free' or 'pro'
   const [searchCount, setSearchCount] = useState(0)
-
+  const [loadingUserData, setLoadingUserData] = useState(true)
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -23,13 +23,47 @@ const Dashboard = () => {
     }
   }, [isSignedIn, navigate])
 
-  // Load user plan and search count from localStorage
+  // Fetch user data from backend
   useEffect(() => {
-    const savedPlan = localStorage.getItem('userPlan') || 'free'
-    const savedCount = parseInt(localStorage.getItem('searchCount') || '0')
-    setUserPlan(savedPlan)
-    setSearchCount(savedCount)
-  }, [])
+    const fetchUserData = async () => {
+      if (!isSignedIn) return
+
+      try {
+        const token = await getToken()
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337'
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          // Set user plan from backend (subscription field)
+          setUserPlan(data.user?.subscription || 'free')
+          // Set search count from backend (search_count_today field)
+          setSearchCount(data.user?.search_count_today || 0)
+        } else {
+          // Fallback to localStorage if API fails
+          const savedPlan = localStorage.getItem('userPlan') || 'free'
+          const savedCount = parseInt(localStorage.getItem('searchCount') || '0')
+          setUserPlan(savedPlan)
+          setSearchCount(savedCount)
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data:', error)
+        // Fallback to localStorage if API fails
+        const savedPlan = localStorage.getItem('userPlan') || 'free'
+        const savedCount = parseInt(localStorage.getItem('searchCount') || '0')
+        setUserPlan(savedPlan)
+        setSearchCount(savedCount)
+      } finally {
+        setLoadingUserData(false)
+      }
+    }
+
+    fetchUserData()
+  }, [isSignedIn, getToken])
 
   const handleUpgradeToPro = () => {
     // In a real app, this would integrate with a payment system
@@ -39,11 +73,24 @@ const Dashboard = () => {
     alert('Pro plan activated! (This is a demo - integrate with payment system in production)')
   }
 
-  const incrementSearchCount = () => {
-    if (userPlan === 'free') {
-      const newCount = searchCount + 1
-      setSearchCount(newCount)
-      localStorage.setItem('searchCount', newCount.toString())
+  const refreshSearchCount = async () => {
+    if (!isSignedIn) return
+
+    try {
+      const token = await getToken()
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337'
+      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setSearchCount(data.user?.search_count_today || 0)
+      }
+    } catch (error) {
+      console.error('Failed to refresh search count:', error)
     }
   }
 
@@ -55,6 +102,17 @@ const Dashboard = () => {
   // Don't render if not authenticated
   if (!isSignedIn) {
     return null
+  }
+
+  if (loadingUserData) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-[#0a0a0a]' : 'bg-gray-50'}`}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#10b981] mx-auto mb-4"></div>
+          <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -113,9 +171,7 @@ const Dashboard = () => {
                   Pro Plan
                 </span>
               )}
-              <div className="flex items-center gap-2">
-                
-              </div>
+
             </div>
           </div>
         </div>
@@ -173,7 +229,7 @@ const Dashboard = () => {
             </button>
           </nav>
           
-          <div className={`p-4 mt-4 border-t ${isDark ? 'border-[#2a2a2a]' : 'border-gray-200'}`}>
+          <div className={`px-4 mt-4 border-t ${isDark ? 'border-[#2a2a2a]' : 'border-gray-200'}`}>
             <div className="flex flex-row-reverse items-center justify-end gap-4 py-4"><span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{user.fullName}</span>
                 <UserButton 
                   appearance={{
@@ -183,19 +239,21 @@ const Dashboard = () => {
                   }}
                 />
                 </div>
+                </div>
           {userPlan === 'free' && (
+            <div className={`py-2 px-4 ${isDark ? 'border-[#2a2a2a]' : 'border-gray-200'}`}>
               <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 <p className="font-medium mb-1">Search Limit</p>
-                <p>{searchCount}/10 searches used</p>
+                <p>{searchCount}/10 searches used today</p>
                 <div className={`mt-2 w-full ${isDark ? 'bg-[#2a2a2a]' : 'bg-gray-200'} rounded-full h-2`}>
                   <div
                     className="bg-[#10b981] h-2 rounded-full transition-all"
-                    style={{ width: `${(searchCount / 10) * 100}%` }}
+                    style={{ width: `${Math.min((searchCount / 10) * 100, 100)}%` }}
                   ></div>
                 </div>
               </div>
+            </div>
           )}
-          </div>
         </aside>
 
         {/* Main Content */}
@@ -205,7 +263,7 @@ const Dashboard = () => {
               canSearch={canSearch()} 
               userPlan={userPlan}
               searchCount={searchCount}
-              onSearch={incrementSearchCount}
+              onSearch={refreshSearchCount}
             />
           )}
           {activeTab === 'details' && (
@@ -213,7 +271,7 @@ const Dashboard = () => {
               canSearch={canSearch()} 
               userPlan={userPlan}
               searchCount={searchCount}
-              onSearch={incrementSearchCount}
+              onSearch={refreshSearchCount}
             />
           )}
           {activeTab === 'monitor' && (
