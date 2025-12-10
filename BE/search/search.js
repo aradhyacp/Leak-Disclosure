@@ -363,7 +363,7 @@ router.post("/search", authMiddleware, async (req, res) => {
     }
 
     if (!result.apiData) {
-      return res.json({ message: "No breaches found", count: 0 });
+      return res.json({ message: "No breaches found", count: 0,breachedBoolean });
     }
 
     return res.json({
@@ -580,6 +580,7 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
       breachedBoolean = false;
       return res.json({
         message: "No detailed breaches found for this email",
+        breachedBoolean
       });
     }
 
