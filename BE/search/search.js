@@ -350,6 +350,7 @@ router.post("/search", authMiddleware, async (req, res) => {
   }
 });
 
+//need to write conditions for free users and update them to db accordingly
 router.post("/detailed-search", authMiddleware, async (req, res) => {
   let breachedBoolean = true;
   const { email } = req.body;
