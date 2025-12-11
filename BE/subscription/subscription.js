@@ -7,7 +7,7 @@ const router = express.Router()
 
 const stripe = new Stripe(config.STRIPE_SECRET_KEY)
 
-router.post("/stripe-checkout",async (req,res)=>{
+router.post("/stripe-checkout",authMiddleware,async (req,res)=>{
     try {
         const { custEmail, priceId } = req.body;
         const clerkId = req.clerkId
