@@ -1,6 +1,6 @@
 import { UserButton, useUser, useAuth } from '@clerk/clerk-react'
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import SearchMail from '../Components/SearchMail'
 import Details from '../Components/Details'
 import Monitor from '../Components/Monitor'
@@ -42,21 +42,10 @@ const Dashboard = () => {
           // Set user plan from backend (subscription field)
           setUserPlan(data.user?.subscription || 'free')
           // Set search count from backend (search_count_today field)
-          setSearchCount(data.user?.search_count_today || 0)
-        } else {
-          // Fallback to localStorage if API fails
-          const savedPlan = localStorage.getItem('userPlan') || 'free'
-          const savedCount = parseInt(localStorage.getItem('searchCount') || '0')
-          setUserPlan(savedPlan)
-          setSearchCount(savedCount)
+          setSearchCount(data.searchData?.search_count_today-1 || 0)
         }
       } catch (error) {
         console.error('Failed to fetch user data:', error)
-        // Fallback to localStorage if API fails
-        const savedPlan = localStorage.getItem('userPlan') || 'free'
-        const savedCount = parseInt(localStorage.getItem('searchCount') || '0')
-        setUserPlan(savedPlan)
-        setSearchCount(savedCount)
       } finally {
         setLoadingUserData(false)
       }
@@ -64,13 +53,6 @@ const Dashboard = () => {
 
     fetchUserData()
   }, [isSignedIn, getToken])
-
-  const handleUpgradeToPro = () => {
-    // @csam1 make new page for payments and then from there call stripe order backend
-    setUserPlan('pro')
-    localStorage.setItem('userPlan', 'pro')
-    alert('Pro plan activated! (This is a demo - integrate with payment system in production)')
-  }
 
   const refreshSearchCount = async () => {
     if (!isSignedIn) return
@@ -86,7 +68,7 @@ const Dashboard = () => {
 
       if (response.ok) {
         const data = await response.json()
-        setSearchCount(data.user?.search_count_today || 0)
+        setSearchCount(data.searchData?.search_count_today-1 || 0)
       }
     } catch (error) {
       console.error('Failed to refresh search count:', error)
@@ -158,12 +140,11 @@ const Dashboard = () => {
                 )}
               </button>
               {userPlan === 'free' && (
-                <button
-                  onClick={handleUpgradeToPro}
+                <Link
                   className="px-4 py-2 bg-[#10b981] text-white rounded-lg hover:bg-[#059669] transition-colors font-medium"
-                >
+                 to="/upgrade">
                   Upgrade to Pro
-                </button>
+                </Link>
               )}
               {userPlan === 'pro' && (
                 <span className="px-3 py-1 bg-[#10b981]/20 text-[#10b981] rounded-full text-sm font-medium border border-[#10b981]/30">
