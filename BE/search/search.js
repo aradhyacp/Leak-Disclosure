@@ -25,7 +25,7 @@ const breachSearch = async (validEmail, userId) => {
     const apiData = await breaches.json();
     if (apiData.length === 0 || apiData.Error) {
       breachedBoolean = false;
-      return { breached: breachedBoolean, apiData: null, count: 0 };
+      return { breachedBoolean: breachedBoolean, apiData: null, count: 0 };
     }
     const count = apiData.breaches[0].length || 0;
 
@@ -148,7 +148,7 @@ const breachSearch = async (validEmail, userId) => {
       );
     }
 
-    return { breached: breachedBoolean, apiData, count };
+    return { breachedBoolean: breachedBoolean, apiData, count };
   } catch (err) {
     console.error("[breachSearch] Unexpected error:", {
       error: err,
@@ -358,12 +358,13 @@ router.post("/search", authMiddleware, async (req, res) => {
     }
 
     const result = await breachSearch(validEmail, userId);
+    console.log(result);
     if (result.error) {
       return res.json({ message: result.error });
     }
 
     if (!result.apiData) {
-      return res.json({ message: "No breaches found", count: 0,breachedBoolean });
+      return res.json({ message: "No breaches found", count: 0, breachedBoolean: result.breachedBoolean });
     }
 
     return res.json({
@@ -371,6 +372,7 @@ router.post("/search", authMiddleware, async (req, res) => {
       breaches: result.apiData.breaches || [],
       message: result.count > 0 ? "Breaches found" : "No breaches found",
       count: result.count,
+      breachedBoolean: result.breachedBoolean
     });
   } catch (err) {
     console.error("[search] Unexpected error:", {
