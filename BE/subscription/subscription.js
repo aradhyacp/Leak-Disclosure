@@ -9,15 +9,16 @@ const stripe = new Stripe(config.STRIPE_SECRET_KEY);
 
 router.post("/stripe-checkout", authMiddleware, async (req, res) => {
   try {
-    const { custEmail, priceId } = req.body;
+    const priceId = "price_1SZW4KGVzqmVv3a2mZJ7rWZl"
     const clerkId = req.clerkId;
     const { data: user, error: userFetch } = await supabase
       .from("users")
-      .select("id")
+      .select("id,email")
       .eq("clerk_id", clerkId)
       .single();
     const userId = user?.id;
-    if (!userId) {
+    const custEmail = user?.email
+    if (!userId || !custEmail) {
       return res.status(401).json({
         message: "Your not found in the db contact admin",
       });

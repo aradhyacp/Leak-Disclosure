@@ -30,10 +30,6 @@ const Upgrade = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            custEmail: user?.primaryEmailAddress?.emailAddress,
-            priceId: "price_1SZW4KGVzqmVv3a2mZJ7rWZl",
-          }),
           method: "POST",
         }
       );
