@@ -88,9 +88,11 @@ const Upgrade = () => {
                 <div>• Priority processing</div>
               </div>
 
-              <div className="border-2 py-3 px-6 md:px-8 rounded-xl border-[#3dfc8f] w-fit mx-auto md:mx-0">
+              <div className="border-2 py-3 px-6 md:px-8 rounded-xl border-[#3dfc8f] w-fit mx-auto md:mx-0 flex flex-col justify-center">
                 <div className="text-gray-200">Billed Monthly</div>
-                <div className="text-[#3dfc8f] font-semibold">$10/Month</div>
+                <div className="text-[#3dfc8f] font-semibold mx-auto">
+                  $10/Month
+                </div>
               </div>
             </div>
 
@@ -107,7 +109,7 @@ const Upgrade = () => {
               </div>
 
               {loading ? (
-                <button className="bg-[#3dfc8f] px-16 md:px-22 py-3 rounded-xl text-black w-fit animate-pulse shadow-[0_0_15px_#3dfc8f80]">
+                <button className="bg-[#3dfc8f] px-16 md:px-22 py-3 rounded-xl text-black w-fit loading shadow-[0_0_15px_#3dfc8f80]">
                   Processing...
                 </button>
               ) : (
