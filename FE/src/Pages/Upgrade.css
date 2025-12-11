@@ -1,0 +1,15 @@
+.loading {
+  background: linear-gradient(90deg, #2563eb, #1d4ed8, #2563eb);
+  background-size: 200% 100%;
+  animation: sweep 1.2s linear infinite;
+  cursor: wait;
+}
+
+@keyframes sweep {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
