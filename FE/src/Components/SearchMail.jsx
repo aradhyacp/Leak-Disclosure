@@ -3,6 +3,7 @@ import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '@clerk/clerk-react'
 import { SearchSkeleton, ResultSkeleton } from './LoadingSkeleton'
 import { animated, useSpring } from '@react-spring/web'
+import Swal from 'sweetalert2'
 
 const SearchMail = ({ canSearch, userPlan, searchCount, onSearch }) => {
   const { isDark } = useTheme()
@@ -36,6 +37,11 @@ const SearchMail = ({ canSearch, userPlan, searchCount, onSearch }) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       setError('Please enter a valid email address')
+      Swal.fire({
+  title: "Invalid Email",
+  text: error,
+  icon: "error"
+});
       return
     }
 
@@ -61,13 +67,13 @@ const SearchMail = ({ canSearch, userPlan, searchCount, onSearch }) => {
 
       const data = await response.json()
 
-      if (data.message && data.message.includes('No breaches')) {
+      if (data.message && data.breachedBoolean==='false') {
         setResult({
           email,
           isLeaked: false,
           message: data.message,
         })
-      } else if (data.breaches && data.breaches.length > 0) {
+      } else if (data.breaches && data.breaches.length > 0 && data.breachedBoolean) {
         setResult({
           email,
           isLeaked: true,
@@ -85,6 +91,11 @@ const SearchMail = ({ canSearch, userPlan, searchCount, onSearch }) => {
       onSearch()
     } catch (err) {
       setError('Failed to search. Please check your connection and try again.')
+      Swal.fire({
+  title: "Network Error",
+  text: error,
+  icon: "error"
+});
       console.error('Search error:', err)
     } finally {
       setLoading(false)
