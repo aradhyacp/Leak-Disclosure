@@ -22,7 +22,7 @@ const Dashboard = () => {
     if (!isSignedIn) {
       navigate('/login')
     }
-  }, [isSignedIn, navigate,isLoaded])
+  }, [isSignedIn, navigate, isLoaded])
 
   // Fetch user data from backend
   useEffect(() => {
