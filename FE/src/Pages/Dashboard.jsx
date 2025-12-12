@@ -44,7 +44,7 @@ const Dashboard = () => {
           setUserPlan(data.user?.subscription || 'free')
           // Set search count from backend (search_count_today field)
           setSearchCount(data.searchData?.search_count_today-1 || 0)
-          if(data.searchData?.search_count_today===0){
+          if (data.searchData?.search_count_today===0){
             setSearchCount(0)
           }
         }
