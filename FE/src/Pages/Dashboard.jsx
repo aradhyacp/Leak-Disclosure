@@ -8,7 +8,7 @@ import { useTheme } from '../context/ThemeContext'
 
 const Dashboard = () => {
   const { user } = useUser()
-  const { isSignedIn, getToken } = useAuth()
+  const { isSignedIn, getToken, isLoaded } = useAuth()
   const navigate = useNavigate()
   const { isDark, toggleTheme } = useTheme()
   const [activeTab, setActiveTab] = useState('search')
@@ -18,10 +18,11 @@ const Dashboard = () => {
 
   // Redirect if not authenticated
   useEffect(() => {
+    if(!isLoaded){return}
     if (!isSignedIn) {
       navigate('/login')
     }
-  }, [isSignedIn, navigate])
+  }, [isSignedIn, navigate,isLoaded])
 
   // Fetch user data from backend
   useEffect(() => {
@@ -43,6 +44,9 @@ const Dashboard = () => {
           setUserPlan(data.user?.subscription || 'free')
           // Set search count from backend (search_count_today field)
           setSearchCount(data.searchData?.search_count_today-1 || 0)
+          if(data.searchData?.search_count_today===0){
+            setSearchCount(0)
+          }
         }
       } catch (error) {
         console.error('Failed to fetch user data:', error)
