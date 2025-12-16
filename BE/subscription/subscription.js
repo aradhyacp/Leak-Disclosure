@@ -9,7 +9,7 @@ const stripe = new Stripe(config.STRIPE_SECRET_KEY);
 
 router.post("/stripe-checkout", authMiddleware, async (req, res) => {
   try {
-    const priceId = "price_1SZW4KGVzqmVv3a2mZJ7rWZl"
+    const priceId = "price_1SZW4KGVzqmVv3a2mZJ7rWZl";
     const clerkId = req.clerkId;
     const { data: user, error: userFetch } = await supabase
       .from("users")
@@ -17,7 +17,7 @@ router.post("/stripe-checkout", authMiddleware, async (req, res) => {
       .eq("clerk_id", clerkId)
       .single();
     const userId = user?.id;
-    const custEmail = user?.email
+    const custEmail = user?.email;
     if (!userId || !custEmail) {
       return res.status(401).json({
         message: "Your not found in the db contact admin",
@@ -44,14 +44,12 @@ router.post("/stripe-checkout", authMiddleware, async (req, res) => {
     console.log(session);
 
     const { data: subscriptionInsert, error: subscriptionInsertError } =
-      await supabase
-        .from("subscriptions")
-        .insert({
-          user_id: userId,
-          stripe_order_id: session.id,
-          stripe_status_text: "Checkout Session Created",
-          stripe_payment_status: false,
-        });
+      await supabase.from("subscriptions").insert({
+        user_id: userId,
+        stripe_order_id: session.id,
+        stripe_status_text: "Checkout Session Created",
+        stripe_payment_status: false,
+      });
 
     return res.json({ url: session.url });
   } catch (error) {

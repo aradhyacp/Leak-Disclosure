@@ -12,12 +12,12 @@ const breachSearch = async (validEmail, userId) => {
   try {
     let breachedBoolean = true;
     const breaches = await fetch(
-      `https://api.xposedornot.com/v1/check-email/${validEmail}`
+      `https://api.xposedornot.com/v1/check-email/${validEmail}`,
     );
 
     if (!breaches.ok) {
       console.error(
-        `[breachSearch] API request failed: ${breaches.status} ${breaches.statusText}`
+        `[breachSearch] API request failed: ${breaches.status} ${breaches.statusText}`,
       );
       return { error: "Failed to fetch breach data from external API" };
     }
@@ -48,7 +48,7 @@ const breachSearch = async (validEmail, userId) => {
             email: validEmail,
             breached: breachedBoolean,
             count,
-          }
+          },
         );
         return { error: "Failed to insert to searches table" };
       }
@@ -59,7 +59,7 @@ const breachSearch = async (validEmail, userId) => {
           {
             userId,
             email: validEmail,
-          }
+          },
         );
       }
     } catch (dbError) {
@@ -86,7 +86,7 @@ const breachSearch = async (validEmail, userId) => {
           {
             error: analyticsSelectError,
             userId,
-          }
+          },
         );
       }
 
@@ -106,7 +106,7 @@ const breachSearch = async (validEmail, userId) => {
               error: analyticsUpdateError,
               userId,
               analyticsRow,
-            }
+            },
           );
         }
       } else {
@@ -123,7 +123,7 @@ const breachSearch = async (validEmail, userId) => {
             {
               error: analyticsInsertError,
               userId,
-            }
+            },
           );
         }
 
@@ -132,7 +132,7 @@ const breachSearch = async (validEmail, userId) => {
             "[breachSearch] Silent error - No data returned from analytics_cache insert:",
             {
               userId,
-            }
+            },
           );
         }
       }
@@ -144,7 +144,7 @@ const breachSearch = async (validEmail, userId) => {
           message: analyticsError?.message,
           stack: analyticsError?.stack,
           userId,
-        }
+        },
       );
     }
 
@@ -229,7 +229,7 @@ router.post("/search", authMiddleware, async (req, res) => {
           {
             error: searchTableError,
             userId,
-          }
+          },
         );
       }
 
@@ -248,7 +248,7 @@ router.post("/search", authMiddleware, async (req, res) => {
             {
               error: insertError,
               userId,
-            }
+            },
           );
           return res.json({
             message: "Failed to initialize search record",
@@ -260,7 +260,7 @@ router.post("/search", authMiddleware, async (req, res) => {
             "[search] Silent error - No data returned from user_search insert:",
             {
               userId,
-            }
+            },
           );
         }
 
@@ -308,7 +308,7 @@ router.post("/search", authMiddleware, async (req, res) => {
               {
                 error: resetError,
                 userId,
-              }
+              },
             );
           } else {
             last_search_table.search_count_today = 0;
@@ -324,7 +324,7 @@ router.post("/search", authMiddleware, async (req, res) => {
             message: freeLimitError?.message,
             stack: freeLimitError?.stack,
             userId,
-          }
+          },
         );
       }
     }
@@ -345,7 +345,7 @@ router.post("/search", authMiddleware, async (req, res) => {
             error: updateError,
             userId,
             search_count: last_search_table.search_count_today,
-          }
+          },
         );
       }
     } catch (updateError) {
@@ -364,7 +364,11 @@ router.post("/search", authMiddleware, async (req, res) => {
     }
 
     if (!result.apiData) {
-      return res.json({ message: "No breaches found", count: 0, breachedBoolean: result.breachedBoolean });
+      return res.json({
+        message: "No breaches found",
+        count: 0,
+        breachedBoolean: result.breachedBoolean,
+      });
     }
 
     return res.json({
@@ -372,7 +376,7 @@ router.post("/search", authMiddleware, async (req, res) => {
       breaches: result.apiData.breaches || [],
       message: result.count > 0 ? "Breaches found" : "No breaches found",
       count: result.count,
-      breachedBoolean: result.breachedBoolean
+      breachedBoolean: result.breachedBoolean,
     });
   } catch (err) {
     console.error("[search] Unexpected error:", {
@@ -417,7 +421,7 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
           {
             error: user_id_error,
             clerkId: req.clerkId,
-          }
+          },
         );
         return res.json({
           message: "there is something wrong in verifying you",
@@ -429,7 +433,7 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
           "[detailed-search] Silent error - No user data returned:",
           {
             clerkId: req.clerkId,
-          }
+          },
         );
         return res.json({
           message: "there is something wrong in verifying you",
@@ -463,7 +467,7 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
           {
             error: searchTableError,
             userId,
-          }
+          },
         );
       }
 
@@ -482,7 +486,7 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
             {
               error: insertError,
               userId,
-            }
+            },
           );
           return res.json({
             message: "Failed to initialize search record",
@@ -533,14 +537,14 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
         if (updateError) {
           console.error(
             "[detailed-search] Failed to update user_search count:",
-            { error: updateError, userId }
+            { error: updateError, userId },
           );
         }
       }
     } catch (err) {
       console.error(
         "[detailed-search] Exception during user_search handling:",
-        { error: err, userId }
+        { error: err, userId },
       );
       return res.json({ message: "Failed to process search record" });
     }
@@ -548,12 +552,12 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
     let detailedData;
     try {
       const detailedBreached = await fetch(
-        `https://api.xposedornot.com/v1/breach-analytics?email=${validEmail}`
+        `https://api.xposedornot.com/v1/breach-analytics?email=${validEmail}`,
       );
 
       if (!detailedBreached.ok) {
         console.error(
-          `[detailed-search] API request failed: ${detailedBreached.status} ${detailedBreached.statusText}`
+          `[detailed-search] API request failed: ${detailedBreached.status} ${detailedBreached.statusText}`,
         );
         return res.json({
           message: "Failed to fetch detailed breach data from external API",
@@ -582,7 +586,7 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
       breachedBoolean = false;
       return res.json({
         message: "No detailed breaches found for this email",
-        breachedBoolean
+        breachedBoolean,
       });
     }
 
@@ -592,11 +596,11 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
         breachedCount = detailedData.BreachesSummary.site.split(";").length;
         console.log(
           "[detailed-search] Breach count calculated:",
-          breachedCount
+          breachedCount,
         );
       } else {
         console.error(
-          "[detailed-search] Missing BreachesSummary.site in API response"
+          "[detailed-search] Missing BreachesSummary.site in API response",
         );
       }
     } catch (countError) {
@@ -607,7 +611,7 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
           message: countError?.message,
           stack: countError?.stack,
           BreachesSummary: detailedData.BreachesSummary,
-        }
+        },
       );
     }
 
@@ -630,7 +634,7 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
             email: validEmail,
             breached: breachedBoolean,
             breach_count: breachedCount,
-          }
+          },
         );
         return res.json({
           message: "Failed to insert to DB",
@@ -643,7 +647,7 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
           {
             userId,
             email: validEmail,
-          }
+          },
         );
       }
     } catch (dbError) {
@@ -672,7 +676,7 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
           {
             error: analyticsSelectError,
             userId,
-          }
+          },
         );
       }
 
@@ -692,7 +696,7 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
               error: analyticsUpdateError,
               userId,
               analyticsRow,
-            }
+            },
           );
         }
       } else {
@@ -709,7 +713,7 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
             {
               error: analyticsInsertError,
               userId,
-            }
+            },
           );
         }
 
@@ -718,7 +722,7 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
             "[detailed-search] Silent error - No data returned from analytics_cache insert:",
             {
               userId,
-            }
+            },
           );
         }
       }
@@ -730,7 +734,7 @@ router.post("/detailed-search", authMiddleware, async (req, res) => {
           message: analyticsError?.message,
           stack: analyticsError?.stack,
           userId,
-        }
+        },
       );
     }
 

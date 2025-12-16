@@ -8,7 +8,7 @@ const authMiddleware = (req, res, next) => {
     return res.status(401).json({ message: "you are not user" });
   }
   req.clerkId = auth.userId;
-  req.subscription = auth.sessionClaims.metadata.subscription
+  req.subscription = auth.sessionClaims.metadata.subscription;
   next();
 };
 
