@@ -25,7 +25,7 @@ const SearchMail = ({ canSearch, userPlan, searchCount, onSearch }) => {
 
     if (!canSearch) {
       setError(
-        "You have reached your search limit. Upgrade to Pro for unlimited searches."
+        "You have reached your search limit. Upgrade to Pro for unlimited searches.",
       );
       return;
     }
@@ -98,7 +98,8 @@ const SearchMail = ({ canSearch, userPlan, searchCount, onSearch }) => {
 
       onSearch();
     } catch (err) {
-      const message = "Failed to search. Please check your connection and try again."
+      const message =
+        "Failed to search. Please check your connection and try again.";
       Swal.fire({
         title: "Network Error",
         text: message,
@@ -260,8 +261,8 @@ const SearchMail = ({ canSearch, userPlan, searchCount, onSearch }) => {
                   ? "bg-red-900/20 border-red-800/50"
                   : "bg-red-50 border-red-200"
                 : isDark
-                ? "bg-green-900/20 border-green-800/50"
-                : "bg-green-50 border-green-200"
+                  ? "bg-green-900/20 border-green-800/50"
+                  : "bg-green-50 border-green-200"
             }`}
           >
             <div className="flex items-start gap-3">
@@ -280,8 +281,8 @@ const SearchMail = ({ canSearch, userPlan, searchCount, onSearch }) => {
                         ? "text-red-300"
                         : "text-red-900"
                       : isDark
-                      ? "text-green-300"
-                      : "text-green-900"
+                        ? "text-green-300"
+                        : "text-green-900"
                   }`}
                 >
                   {result.isLeaked ? "Email Leaked" : "Email Safe"}
@@ -293,8 +294,8 @@ const SearchMail = ({ canSearch, userPlan, searchCount, onSearch }) => {
                         ? "text-red-300"
                         : "text-red-800"
                       : isDark
-                      ? "text-green-300"
-                      : "text-green-800"
+                        ? "text-green-300"
+                        : "text-green-800"
                   }`}
                 >
                   <strong>Email:</strong> {result.email}
@@ -306,8 +307,8 @@ const SearchMail = ({ canSearch, userPlan, searchCount, onSearch }) => {
                         ? "text-red-300"
                         : "text-red-800"
                       : isDark
-                      ? "text-green-300"
-                      : "text-green-800"
+                        ? "text-green-300"
+                        : "text-green-800"
                   }
                 >
                   {result.message}

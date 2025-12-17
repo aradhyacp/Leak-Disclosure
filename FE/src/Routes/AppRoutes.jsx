@@ -28,9 +28,9 @@ const AppRoutes = () => {
           <Route path="/stripe/cancel" element={<Cancel />} />
           <Route path="/upgrade" element={<Upgrade />} />
         </Route>
-        <Route path="*" element={<NotFound/>}/>
-      </>
-    )
+        <Route path="*" element={<NotFound />} />
+      </>,
+    ),
   );
   return <RouterProvider router={router} />;
 };

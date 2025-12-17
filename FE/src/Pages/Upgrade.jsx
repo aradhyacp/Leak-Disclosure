@@ -31,7 +31,7 @@ const Upgrade = () => {
             "Content-Type": "application/json",
           },
           method: "POST",
-        }
+        },
       );
 
       if (!result.ok) throw new Error("Server error");

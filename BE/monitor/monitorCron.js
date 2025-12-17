@@ -12,7 +12,7 @@ export async function cronMonitorEmails() {
     for (const email of emailList) {
       try {
         const res = await fetch(
-          `https://api.xposedornot.com/v1/check-email/${emailEntry.email}`
+          `https://api.xposedornot.com/v1/check-email/${emailEntry.email}`,
         );
         const data = await res.json();
         const newBreachCount = data?.breaches?.length || 0;
@@ -31,7 +31,7 @@ export async function cronMonitorEmails() {
               emailEntry.email
             }</strong> has <strong>${
               newBreachCount - emailEntry.last_breach_count
-            } new breaches</strong>.</p>`
+            } new breaches</strong>.</p>`,
           );
           await supabase
             .from("monitored_emails")
@@ -56,6 +56,6 @@ export async function cronMonitorEmails() {
 }
 
 cron.schedule("*/30 * * * * *", () => {
-    console.log("Running monitored email check");
-    cronMonitorEmails()
+  console.log("Running monitored email check");
+  cronMonitorEmails();
 });
