@@ -1,0 +1,31 @@
+{
+  "name": "leak-disclosure",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Leak Disclosure Monorepo",
+  "scripts": {
+    "prepare": "husky",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css,html}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.11",
+    "eslint": "^9.17.0",
+    "prettier": "^3.4.2",
+    "@eslint/js": "^9.17.0",
+    "globals": "^15.14.0"
+  }
+}
