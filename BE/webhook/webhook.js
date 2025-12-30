@@ -1,14 +1,12 @@
-import express from "express"
-import { Webhook } from "svix"
-import config from "../config.js"
-import supabase from "../db/index.js"
-import { clerkClient } from "@clerk/express"
+import express from "express";
+import { Webhook } from "svix";
+import config from "../config.js";
+import supabase from "../db/index.js";
+import { clerkClient } from "@clerk/express";
 const router = express.Router();
 
-const WEBHOOK_SECRET = config.WEBHOOK_SECRET
+const WEBHOOK_SECRET = config.WEBHOOK_SECRET;
 router.post("/create", async (req, res) => {
-    
-
   if (!WEBHOOK_SECRET) {
     return res.status(400).json({
       message: "No sign key found",
@@ -56,7 +54,7 @@ router.post("/create", async (req, res) => {
     try {
       const { email_addresses, primary_email_address_id } = event.data;
       const primaryEmail = email_addresses.find(
-        (email) => email.id === primary_email_address_id
+        (email) => email.id === primary_email_address_id,
       );
       console.log("Primary email:", primaryEmail);
       console.log("Email addresses:", primaryEmail?.email_address);
@@ -70,7 +68,6 @@ router.post("/create", async (req, res) => {
         {
           clerk_id: id,
           email: primaryEmail.email_address,
-
         },
       ]);
       if (insertError) {
@@ -78,11 +75,11 @@ router.post("/create", async (req, res) => {
         return res.status(500).json({ error: "Failed to add to supabase" });
       }
 
-      // await clerkClient.users.updateUserMetadata(id, {
-      //   publicMetadata: { role: "user" },
-      // });
+      await clerkClient.users.updateUserMetadata(id, {
+        publicMetadata: { role: "user", subscription: "free" },
+      });
 
-      // console.log("user added to supabase and role set");
+      console.log("user added to supabase and role set");
     } catch (error) {
       console.error("Error creating user in database:", error);
       return res.status(500).json({ message: "Error creating user" });
@@ -91,4 +88,4 @@ router.post("/create", async (req, res) => {
   return res.status(200).json({ message: "Webhook received successfully" });
 });
 
-export default router
+export default router;
